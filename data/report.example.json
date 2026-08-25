@@ -1,0 +1,53 @@
+{
+  "_comment": "Sample dashboard data so the UI renders on a fresh clone. Entirely fictional. A real 'Refresh Daily Report' run overwrites data/report.json, which is gitignored.",
+  "todayCalendar": [
+    { "time": "9:00 AM", "title": "Client shoot — Northwind Coffee brand film | Operator: Crew A" },
+    { "time": "4:30 PM", "title": "Scout — Contoso HQ atrium" }
+  ],
+  "yesterdayCompleted": [
+    "Delivered Fabrikam recruitment video V2",
+    "Sent Q3 equipment maintenance schedule"
+  ],
+  "openTasks": {
+    "high": 4,
+    "medium": 9,
+    "low": 3,
+    "top": [
+      "Northwind Coffee — colour pass due Thursday",
+      "Contoso — send revised quote",
+      "Replace B-cam battery set before Friday",
+      "Fabrikam — collect signed release forms",
+      "Q3 bookkeeping handoff to accountant"
+    ]
+  },
+  "pipeline": {
+    "openValue": 24500,
+    "wonThisMonth": 18200,
+    "stages": [
+      { "name": "Lead", "count": 5, "value": 0 },
+      { "name": "Quote Sent", "count": 2, "value": 14000 },
+      { "name": "In Production", "count": 3, "value": 8500 },
+      { "name": "Delivered", "count": 1, "value": 2000 }
+    ]
+  },
+  "invoices": {
+    "overdueCount": 2,
+    "overdueTotal": 3400,
+    "items": [
+      { "who": "Northwind Coffee (brand film, deposit)", "amount": 2400, "daysOverdue": 6 },
+      { "who": "Contoso (event coverage)", "amount": 1000, "daysOverdue": 21 }
+    ]
+  },
+  "social": {
+    "igFollowers": 1840,
+    "posts30d": 6,
+    "top": {
+      "caption": "\"Three lighting setups we use for interviews in rooms with bad windows...\"",
+      "stat": "412 likes / 27 comments"
+    }
+  },
+  "notes": [
+    "Sample data — replace by running the Refresh Daily Report button."
+  ],
+  "generatedAt": "2026-01-15T14:00:00.000Z"
+}

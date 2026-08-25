@@ -1,0 +1,29 @@
+{
+  "_note": "Registry of standing automations shown on the dashboard. The app can't trigger them — this is status display only. Edit freely; these entries are examples.",
+  "automations": [
+    {
+      "name": "Morning Brief",
+      "schedule": "Weekdays 7:10 AM",
+      "where": "Cloud routine",
+      "what": "Calendars, inboxes, chat, CRM and pipeline → an email draft plus the day's top three"
+    },
+    {
+      "name": "Lead Response Drafts",
+      "schedule": "Weekdays 8 AM & 3 PM",
+      "where": "Cloud routine",
+      "what": "Scans the CRM for unanswered inbound and drafts replies for review (draft-only)"
+    },
+    {
+      "name": "Weekly Finance Sync",
+      "schedule": "Mondays 7 AM",
+      "where": "OS task scheduler",
+      "what": "Pulls transactions into a local database and mirrors a CSV into the finance folder"
+    },
+    {
+      "name": "Weekly Skill Review",
+      "schedule": "Fridays 9 AM",
+      "where": "Scheduled agent task",
+      "what": "Applies open workflow observations and stages updated skill files for approval"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated agent run output (regenerated at runtime, not source)
+runs/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# --- secret patterns (added by repo-backup hardening) ---
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+credentials.json
+service-account*.json
+
+# Local machine config (copy config.example.json -> config.json)
+config.json
+
+# Locally generated dashboard data
+data/report.json

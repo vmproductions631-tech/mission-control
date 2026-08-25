@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMP Mission Control</title>
+<link rel="icon" href="/assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img src="/assets/logo-lockup-dark.png" alt="Vision Maker Productions" class="logo">
+    <div class="brand-text">
+      <h1>Mission Control</h1>
+      <span class="tagline">Bring Your Vision to Life</span>
+    </div>
+  </div>
+  <nav id="tabs">
+    <button data-tab="dashboard" class="tab active">Dashboard</button>
+    <button data-tab="skills" class="tab">Skills</button>
+    <button data-tab="log" class="tab">Session Log</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ DASHBOARD ============ -->
+  <section id="view-dashboard" class="view active">
+    <div class="report-head">
+      <h2>Daily Report</h2>
+      <div class="report-meta">
+        <span id="report-updated" class="muted"></span>
+        <button id="btn-refresh-report" class="btn gold">Refresh Report</button>
+      </div>
+    </div>
+    <div id="report-empty" class="card empty hidden">
+      No report yet — click <strong>Refresh Report</strong> to generate the first one (takes a couple of minutes).
+    </div>
+    <div class="grid" id="report-grid">
+      <div class="card" id="card-today"><h3>Today</h3><div class="card-body"></div></div>
+      <div class="card" id="card-tasks"><h3>Open Tasks</h3><div class="card-body"></div></div>
+      <div class="card" id="card-yesterday"><h3>Recently Completed</h3><div class="card-body"></div></div>
+      <div class="card" id="card-pipeline"><h3>Pipeline</h3><div class="card-body"></div></div>
+      <div class="card" id="card-invoices"><h3>Invoices</h3><div class="card-body"></div></div>
+      <div class="card" id="card-social"><h3>Instagram</h3><div class="card-body"></div></div>
+      <div class="card" id="card-notes"><h3>Flags</h3><div class="card-body"></div></div>
+    </div>
+    <h2 class="section-title">Activity</h2>
+    <div class="grid">
+      <div class="card" id="card-sessions"><h3>Sessions This Week</h3><div class="card-body"></div></div>
+      <div class="card" id="card-overnight"><h3>Ran Overnight</h3><div class="card-body"></div></div>
+      <div class="card wide" id="card-automations"><h3>Standing Automations</h3><div class="card-body"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SKILLS ============ -->
+  <section id="view-skills" class="view">
+    <div id="skills-root"></div>
+  </section>
+
+  <!-- ============ LOG ============ -->
+  <section id="view-log" class="view">
+    <h2>Session Log</h2>
+    <div id="log-root"></div>
+  </section>
+</main>
+
+<!-- run stream drawer -->
+<div id="drawer" class="drawer hidden">
+  <div class="drawer-head">
+    <div>
+      <strong id="drawer-title"></strong>
+      <span id="drawer-status" class="pill"></span>
+    </div>
+    <div>
+      <button id="drawer-stop" class="btn small danger">Stop</button>
+      <button id="drawer-close" class="btn small">Close</button>
+    </div>
+  </div>
+  <div id="drawer-body" class="drawer-body"></div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+{
+  "_howToAddAButton": "Copy any object below, change id/label/group/description/prompt, save. That's it — the app re-reads this file on every page load. Optional fields: input {label, placeholder, required}, allowedTools (merged with defaults in config.json), model, cwd, maxTurns, kind ('report' makes the server save the run's final JSON output to data/report.json).",
+  "groups": ["Daily Ops", "Sales", "Content", "Finance", "Research", "System"],
+  "skills": [
+    {
+      "id": "daily-report",
+      "label": "Refresh Daily Report",
+      "group": "Daily Ops",
+      "kind": "report",
+      "description": "Rebuilds the dashboard report: tasks, today's shoots, pipeline, invoices, IG stats.",
+      "model": "sonnet",
+      "maxTurns": 50,
+      "allowedTools": [
+        "mcp__gohighlevel__ghl_get_calendar_events",
+        "mcp__gohighlevel__ghl_get_pipelines",
+        "mcp__gohighlevel__ghl_search_opportunities",
+        "mcp__gohighlevel__ghl_list_invoices",
+        "mcp__meta__meta_get_instagram_account",
+        "mcp__meta__meta_list_ig_media",
+        "mcp__meta__meta_media_insights",
+        "mcp__meta__meta_ig_insights"
+      ],
+      "prompt": "Generate the daily report as strict JSON. Gather:\n1) Read TASKS.md at the workspace root. Count open tasks by priority (High/Medium/Low sections). Pick the 5 most urgent open items as 'top'. From '## Recently Completed', list items dated within the last 2 days as yesterdayCompleted.\n2) the CRM (gohighlevel MCP): today's events on the production-days calendar (id from config: PRODUCTION_CALENDAR_ID). Open opportunities in the the New Client pipeline (id from config: SALES_PIPELINE_ID): total open value and per-stage counts/values. Total value of opportunities Won this calendar month. Invoices with status sent or partially_paid whose due date has passed: count, total, and per-invoice who/amount/daysOverdue.\n3) Instagram (meta MCP): follower count for the IG account, number of media posted in the last 30 days, and the recent post with the best engagement (caption excerpt + its best stat).\nIf any single source fails, keep going and set that section to null with a note in 'notes'.\nThen output ONLY a JSON object (no markdown fences, no commentary) exactly in this shape:\n{\"todayCalendar\":[{\"time\":\"3:00 PM\",\"title\":\"...\"}],\"yesterdayCompleted\":[\"...\"],\"openTasks\":{\"high\":0,\"medium\":0,\"low\":0,\"top\":[\"...\"]},\"pipeline\":{\"openValue\":0,\"wonThisMonth\":0,\"stages\":[{\"name\":\"...\",\"count\":0,\"value\":0}]},\"invoices\":{\"overdueCount\":0,\"overdueTotal\":0,\"items\":[{\"who\":\"...\",\"amount\":0,\"daysOverdue\":0}]},\"social\":{\"igFollowers\":0,\"posts30d\":0,\"top\":{\"caption\":\"...\",\"stat\":\"...\"}},\"notes\":[\"...\"]}"
+    },
+    {
+      "id": "drift-check",
+      "label": "Pipeline Drift Check",
+      "group": "Daily Ops",
+      "description": "Compares project phases in TASKS.md against the CRM Production Pipeline stages and flags mismatches. Report only.",
+      "allowedTools": [
+        "mcp__gohighlevel__ghl_get_pipelines",
+        "mcp__gohighlevel__ghl_search_opportunities",
+        "mcp__gohighlevel__ghl_get_opportunity"
+      ],
+      "prompt": "Run the pipeline drift check. Monday.com is NOT reachable from this CLI, so use TASKS.md as the phase source (say so in the output header).\n1) Read TASKS.md and extract every project that has a stated production phase/status (editing, revisions, delivered, etc.).\n2) Fetch open opportunities in the GHL the Production pipeline (id from config: PRODUCTION_PIPELINE_ID) and their stages, plus the New Client pipeline (id from config: SALES_PIPELINE_ID) statuses.\n3) Compare using the phase-sync crosswalk documented in the workspace CLAUDE.md.\nOutput a markdown table: project | TASKS.md phase | GHL stage | verdict (OK / DRIFT) | recommended move. Do NOT change anything in GHL — report only."
+    },
+    {
+      "id": "task-triage",
+      "label": "Task Triage",
+      "group": "Daily Ops",
+      "description": "Reads TASKS.md and flags stale items, at-risk delivery promises, and today's top 3. Report only.",
+      "prompt": "Read TASKS.md and MEMORY.md at the workspace root. Produce a triage report:\n1) Items that look stale (no movement implied for 14+ days) with a recommended next action each.\n2) Delivery promises at risk (anything promised to a client that may be slipping — see Failure Pattern 5 in skills/11-failure-patterns.md).\n3) Top 3 for today, with one line of reasoning each.\nReport only — do not edit TASKS.md."
+    },
+    {
+      "id": "pipeline-review",
+      "label": "Pipeline Review",
+      "group": "Sales",
+      "description": "Full sales-pipeline health check: stalled deals, $0 Won deals, next best actions.",
+      "allowedTools": [
+        "mcp__gohighlevel__ghl_get_pipelines",
+        "mcp__gohighlevel__ghl_search_opportunities",
+        "mcp__gohighlevel__ghl_get_opportunity",
+        "mcp__gohighlevel__ghl_get_contact"
+      ],
+      "prompt": "Review the sales pipeline. Fetch both pipelines (New Client = SALES_PIPELINE_ID, Production = PRODUCTION_PIPELINE_ID) and all open opportunities. Report:\n1) Every open opp: name, stage, value, how stale it looks.\n2) Stalled deals (no movement 21+ days) with a next best action each.\n3) Any Won deals at $0 value — revenue invisible in the source of truth.\n4) Totals vs the pacing targets recorded in MEMORY.md.\nReport only — change nothing."
+    },
+    {
+      "id": "lead-dossier",
+      "label": "Lead Dossier",
+      "group": "Sales",
+      "description": "Researches a prospect and saves a dossier to Sales & Lead Gen/Dossiers/.",
+      "input": { "label": "Who?", "placeholder": "Person or company name + any context", "required": true },
+      "allowedTools": [
+        "Write",
+        "mcp__perplexity__perplexity_search",
+        "mcp__perplexity__perplexity_ask",
+        "mcp__firecrawl__firecrawl_search",
+        "mcp__firecrawl__firecrawl_scrape"
+      ],
+      "prompt": "Build a lead dossier on: {input}\nFirst grep the workspace (Sales & Lead Gen, Business Operations/Clients, MEMORY.md) for any existing history with them. Then research via Perplexity/Firecrawl/web: who they are, their business, recent news, and their likely video-production needs. Angle everything toward how the studio could serve them.\nWrite the dossier to 'Sales & Lead Gen/Dossiers/' as a dated markdown file (create the folder if needed) and end your reply with a 5-line executive summary. Research only — no outreach."
+    },
+    {
+      "id": "outreach-drafts",
+      "label": "Outreach Drafts",
+      "group": "Sales",
+      "description": "Scans the CRM for unanswered inbound messages and drafts replies. DRAFT ONLY — nothing is sent.",
+      "allowedTools": [
+        "Write",
+        "mcp__gohighlevel__ghl_search_conversations",
+        "mcp__gohighlevel__ghl_get_messages",
+        "mcp__gohighlevel__ghl_search_contacts",
+        "mcp__gohighlevel__ghl_get_contact",
+        "mcp__gohighlevel__ghl_search_opportunities"
+      ],
+      "prompt": "Scan the CRM (gohighlevel MCP) for inbound conversations from the last 7 days with no genuine human reply from the owner — auto-acknowledgements don't count as replies.\nRead 00_Resources/voice-principles.md first. For each unanswered thread, DRAFT a reply in the owner's voice, matching the formality of the inbound message.\nWrite all drafts into one dated file 'Sales & Lead Gen/Outreach Drafts — YYYY-MM-DD.md' with the thread context above each draft.\nDRAFT ONLY: you have no send tools and must not attempt to send anything."
+    },
+    {
+      "id": "blue-ocean",
+      "label": "Blue Ocean Niche Check",
+      "group": "Sales",
+      "description": "YouTube niche verdict: can this niche win, what it pays, what the angle is. Needs the vidIQ MCP.",
+      "input": { "label": "Niche", "placeholder": "e.g. behind-the-scenes video production for nonprofits", "required": true },
+      "allowedTools": ["Bash", "Write", "Edit"],
+      "maxTurns": 60,
+      "prompt": "/blue-ocean {input}"
+    },
+    {
+      "id": "editing-brief",
+      "label": "Editing Brief",
+      "group": "Content",
+      "description": "Creates an editing brief for a project and saves it in Creative Studio/Editing Briefs/Briefs/. Draft only.",
+      "input": { "label": "Project", "placeholder": "Project name + editor + any notes on the footage/deliverable", "required": true },
+      "allowedTools": ["Write", "Edit"],
+      "prompt": "Use the editing-brief skill to create an editing brief for: {input}\nFirst read the relevant client folder under 'Business Operations/Clients/' and any existing briefs in 'Creative Studio/Editing Briefs/Briefs/' to match the house format and naming pattern (YYYY-MM-DD — Client — Project.md). Save the new brief there.\nDraft only — do not send it to any editor."
+    },
+    {
+      "id": "post-shoot",
+      "label": "Post-Shoot Workflow",
+      "group": "Content",
+      "description": "Runs the post-shoot skill: footage intake, organization, and next-step checklist after a shoot day.",
+      "input": { "label": "Shoot", "placeholder": "Which shoot? Add footage folder path if known", "required": true },
+      "allowedTools": ["Bash", "Write", "Edit"],
+      "prompt": "/post-shoot {input}"
+    },
+    {
+      "id": "tiktok-trends",
+      "label": "TikTok Trend Hunter",
+      "group": "Content",
+      "description": "Scans TikTok for high-velocity trends in a niche via Apify.",
+      "input": { "label": "Niche", "placeholder": "e.g. videography, Long Island small business", "required": true },
+      "allowedTools": ["Bash", "Write"],
+      "maxTurns": 60,
+      "prompt": "/tiktok-trend-hunter {input}"
+    },
+    {
+      "id": "captions",
+      "label": "Caption Generator",
+      "group": "Content",
+      "description": "Generates captions/subtitles for a local video file (needs ffmpeg).",
+      "input": { "label": "Video path", "placeholder": "Full path to the video file", "required": true },
+      "allowedTools": ["Bash", "Write"],
+      "maxTurns": 60,
+      "prompt": "Use the video-caption-generator skill on this local video file: {input}\nSave all outputs next to the source video and report the output paths."
+    },
+    {
+      "id": "x-longform",
+      "label": "X Long-form Draft",
+      "group": "Content",
+      "description": "Drafts a long-form X post in the owner's voice. Draft only — never posts.",
+      "input": { "label": "Topic", "placeholder": "What's the post about?", "required": true },
+      "allowedTools": ["Write"],
+      "prompt": "Read 00_Resources/voice-principles.md, then use the x-longform-post skill to draft a long-form X post about: {input}\nCompany voice is 'we'; personal voice is 'I'. Save the draft to 'Creative Studio/Drafts/' as a dated markdown file (create the folder if needed).\nDRAFT ONLY — do not post anywhere."
+    },
+    {
+      "id": "yt-competitive",
+      "label": "YT Competitive Analysis",
+      "group": "Content",
+      "description": "Analyzes competitor YouTube channels in a niche: what works, gaps, angles.",
+      "input": { "label": "Channel or niche", "placeholder": "Channel URL or niche description", "required": true },
+      "allowedTools": ["Bash", "Write"],
+      "maxTurns": 60,
+      "prompt": "/yt-competitive-analysis {input}"
+    },
+    {
+      "id": "revenue-snapshot",
+      "label": "Revenue Snapshot",
+      "group": "Finance",
+      "description": "Won revenue this month/quarter vs target pacing, plus open pipeline value.",
+      "allowedTools": [
+        "mcp__gohighlevel__ghl_get_pipelines",
+        "mcp__gohighlevel__ghl_search_opportunities",
+        "mcp__gohighlevel__ghl_list_invoices"
+      ],
+      "prompt": "Produce a revenue snapshot from the CRM (the revenue source of truth):\n1) Won opportunity value in the the New Client pipeline (id from config: SALES_PIPELINE_ID) this calendar month and this quarter. Note: Production Pipeline opps are intentionally $0 — never count them.\n2) Open pipeline value by stage.\n3) Outstanding invoice total (sent + partially_paid).\n4) Pacing verdict against the monthly revenue target recorded in MEMORY.md.\nFlag any Won-at-$0 deals you notice. Report only."
+    },
+    {
+      "id": "invoice-chase",
+      "label": "Invoice Chase Drafts",
+      "group": "Finance",
+      "description": "Finds overdue invoices and drafts polite chase messages. DRAFT ONLY — nothing is sent.",
+      "allowedTools": [
+        "Write",
+        "mcp__gohighlevel__ghl_list_invoices",
+        "mcp__gohighlevel__ghl_get_invoice",
+        "mcp__gohighlevel__ghl_get_contact"
+      ],
+      "prompt": "List all CRM invoices with status sent or partially_paid whose due date has passed. Read 00_Resources/voice-principles.md, then for each overdue invoice DRAFT a short, warm chase message in the owner's voice (match how overdue it is: gentle at 1 week, firmer at 30+ days).\nWrite all drafts into 'Business Operations/Invoice Chase Drafts — YYYY-MM-DD.md' with invoice details above each draft.\nDRAFT ONLY: you have no send tools and must not attempt to send anything."
+    },
+    {
+      "id": "invoice-organizer",
+      "label": "Invoice Organizer",
+      "group": "Finance",
+      "description": "Organizes invoice/receipt files in a folder: renames to a consistent scheme, builds an index. Never deletes.",
+      "input": { "label": "Folder", "placeholder": "Defaults to Business Operations if empty", "required": false },
+      "allowedTools": ["Bash", "Write", "Edit"],
+      "prompt": "Use the invoice-organizer skill on this folder: {input}\nIf no folder was given, use 'Business Operations' in the workspace root. Rename/organize and build an index, but NEVER delete any file — root CLAUDE.md requires confirmation before deletions, so flag duplicates in your report instead."
+    },
+    {
+      "id": "client-timesheet",
+      "label": "Client Timesheet",
+      "group": "Finance",
+      "description": "Fills a client timesheet PDF from the details you give it. Saves locally — never sends.",
+      "input": { "label": "Details", "placeholder": "Period, days worked, hours, job codes", "required": true },
+      "allowedTools": ["Bash", "Write"],
+      "prompt": "Fill a client timesheet. Read the client's folder under 'Business Operations/Clients/' and its MEMORY.md for rates and job-code conventions, then read the script 'Business Operations/fill_timesheet.py' to learn its interface, and run it with these details: {input}\nSave the PDF in Business Operations following the existing naming pattern and report the output path. Do NOT email or send anything."
+    },
+    {
+      "id": "deep-research",
+      "label": "Deep Research",
+      "group": "Research",
+      "description": "Multi-source research with citations. Slow (10–20 min). Saves a report to 00_Resources/Research/.",
+      "input": { "label": "Topic", "placeholder": "What should be researched?", "required": true },
+      "allowedTools": [
+        "Write",
+        "Task",
+        "mcp__perplexity__perplexity_search",
+        "mcp__perplexity__perplexity_research",
+        "mcp__firecrawl__firecrawl_search",
+        "mcp__firecrawl__firecrawl_scrape"
+      ],
+      "maxTurns": 80,
+      "prompt": "Use the deep-research skill on this topic: {input}\nSave the final report to '00_Resources/Research/' as a dated markdown file (create the folder if needed) and end your reply with the executive summary."
+    },
+    {
+      "id": "quick-research",
+      "label": "Quick Answer",
+      "group": "Research",
+      "description": "Fast web-grounded answer with sources via Perplexity.",
+      "input": { "label": "Question", "placeholder": "Ask anything", "required": true },
+      "model": "sonnet",
+      "maxTurns": 10,
+      "allowedTools": [
+        "mcp__perplexity__perplexity_search",
+        "mcp__perplexity__perplexity_ask"
+      ],
+      "prompt": "Answer this concisely with sources, using Perplexity search: {input}"
+    },
+    {
+      "id": "skill-review",
+      "label": "Weekly Skill Review",
+      "group": "System",
+      "description": "Runs the task-observer comprehensive review: applies open observations, stages skill updates for approval.",
+      "allowedTools": ["Write", "Edit", "Bash"],
+      "maxTurns": 60,
+      "prompt": "Invoke the task-observer skill and run its Comprehensive Review in scheduled-autonomous mode (the user is not present): load OPEN observations from skill-observations/log.md, apply every non-escalated observation by staging updated skills into skill-updates/<today>/, mark them ACTIONED, update last-review-date.txt, and finish with the standard review summary listing anything escalated for the owner's decision."
+    },
+    {
+      "id": "health-check",
+      "label": "App Health Check",
+      "group": "System",
+      "description": "Verifies the wiring: MCP servers respond, workspace files readable. Green/red checklist.",
+      "model": "sonnet",
+      "maxTurns": 15,
+      "allowedTools": [
+        "mcp__gohighlevel__ghl_get_pipelines",
+        "mcp__meta__meta_whoami",
+        "Bash"
+      ],
+      "prompt": "Run a Mission Control health check and output a green/red checklist:\n1) GHL MCP: fetch pipelines (report count).\n2) Meta MCP: whoami (report page name).\n3) TASKS.md and MEMORY.md readable at the workspace root (report line counts).\n4) node --version via Bash.\nOne line per check: PASS/FAIL + detail. End with an overall verdict."
+    }
+  ]
+}
